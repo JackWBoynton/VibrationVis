@@ -1,1 +1,0 @@
-"""Module for Visualizing the Structure."""
