@@ -41,11 +41,27 @@ class StructureWithSensors:
         pass
 
     def plot(self) -> None:
-        fig = go.Figure()
-        fig.add_trace(go.Scatter3d(x=self.x, y=self.y, z=self.z, mode="markers", name="Structure"))
-        for sensor in self.sensors:
-            x, y, z = self.sensors[sensor]
-            fig.add_trace(go.Scatter3d(x=[x], y=[y], z=[z], mode="markers", name=f"Sensor {sensor}"))
+        fig = go.Figure(
+            data=[
+                go.Scatter3d(x=self.x, y=self.y, z=self.z, mode="markers", name="Structure"),
+                *[go.Scatter3d(x=[self.sensors[sensor][0]], y=[self.sensors[sensor][1]], z=[self.sensors[sensor][2]], mode="markers", name=f"Sensor {sensor}") for sensor in self.sensors]
+            ],
+            layout=go.Layout(
+                updatemenus=[
+                    dict(
+                        type="buttons",
+                        buttons=[
+                            dict(
+                                label="Play",
+                                method="animate",
+                                args=[None]
+                            )
+                        ]
+                    )
+                ]
+            ),
+            frames=self.build_frames()
+        )
         fig.show()
 
 
