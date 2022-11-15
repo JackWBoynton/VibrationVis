@@ -14,20 +14,25 @@ class StructureWithSensors:
         height_inches: float,
         sensors: dict[str, tuple[float, float, float]],
         density: float = 1.0,
-        points_per_inch: int = 10
+        points_per_inch: int = 25
     ) -> None:
         self.length_inches = length_inches
         self.width_inches = width_inches
         self.height_inches = height_inches
+        self.sensors = sensors
         self.density = density
         self.points_per_inch = points_per_inch
 
-        self.x, self.y, self.z = np.meshgrid(
+        x, y, z = np.meshgrid(
             np.linspace(0, self.length_inches, self.points_per_inch),
             np.linspace(0, self.width_inches, self.points_per_inch),
             np.linspace(0, self.height_inches, self.points_per_inch),
-            indexing="ij"
+            indexing="ij",
+            sparse=False,
         )
+        self.x = x.flatten()
+        self.y = y.flatten()
+        self.z = z.flatten()
 
     def load_data(self, data_path: str) -> None:
         pass
@@ -37,7 +42,10 @@ class StructureWithSensors:
 
     def plot(self) -> None:
         fig = go.Figure()
-        fig.add_trace(go.Scatter3d(x=self.x, y=self.y, z=self.z, opacity=1))
+        fig.add_trace(go.Scatter3d(x=self.x, y=self.y, z=self.z, mode="markers", name="Structure"))
+        for sensor in self.sensors:
+            x, y, z = self.sensors[sensor]
+            fig.add_trace(go.Scatter3d(x=[x], y=[y], z=[z], mode="markers", name=f"Sensor {sensor}"))
         fig.show()
 
 
@@ -49,7 +57,7 @@ Z_LEN = 1.25
 sensors = {
     "A": (0, 0, Z_LEN),
     "B": (0, Y_LEN ,Z_LEN),
-    "D": (Z_LEN, Y_LEN, Z_LEN),
+    "D": (X_LEN, Y_LEN, Z_LEN),
 }
 my_structure = StructureWithSensors(X_LEN, Y_LEN, Z_LEN, sensors)
 my_structure.plot()
