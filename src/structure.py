@@ -1,8 +1,10 @@
 """Structure Class and Utils."""
 
 import numpy as np
+import pandas as pd
 import plotly.graph_objects as go
-
+from plotly.subplots import make_subplots
+from tqdm import tqdm
 
 class StructureWithSensors:
     """Class to Handle an Instance of a Structure to Simulate."""
@@ -13,8 +15,8 @@ class StructureWithSensors:
         width_inches: float,
         height_inches: float,
         sensors: dict[str, tuple[float, float, float]],
-        density: float = 1.0,
-        points_per_inch: int = 25
+        density: float = 0.75,
+        points_per_inch: int = 20
     ) -> None:
         self.length_inches = length_inches
         self.width_inches = width_inches
@@ -34,11 +36,57 @@ class StructureWithSensors:
         self.y = y.flatten()
         self.z = z.flatten()
 
+        self.fig = make_subplots(
+            rows=2, cols=3,
+            specs=[[{"type": "xy"}, {"type": "surface"}, {"type": "xy"}],
+                [{"type": "xy"}, {"type": "xy"}, {"type": "xy"}]],
+        )
+
     def load_data(self, data_path: str) -> None:
-        pass
+        self.data = pd.read_csv(data_path).sort_values(by="timestamp_sent")
+
+
 
     def build_frames(self) -> None:
-        pass
+        import matplotlib.pyplot as plt
+        by_sensors = [self.data[self.data["field"] == sensor] for sensor in self.sensors]
+        min_len = min([len(sensor) for sensor in by_sensors])
+        trimmed = [sensor[:min_len] for sensor in by_sensors]
+
+        frames = []
+        # make me faster
+        for i in tqdm(range(min_len)[5000:50+5000]):
+            # go.Scatter3d(x=self.x, y=self.y, z=self.z, mode="markers", marker=dict(color="lightgrey",opacity=0.5), name="Structure")
+            sensor_plots = []
+            for sensor, trimmed_sensor in zip(self.sensors.keys(), trimmed):
+                sensor_x, sensor_y, sensor_z = self.sensors[sensor]
+                propagataion_x = np.abs(trimmed_sensor[trimmed_sensor["channel"] == "X"]["reading"].values[i]) / self.density
+                propagataion_y = np.abs(trimmed_sensor[trimmed_sensor["channel"] == "Y"]["reading"].values[i]) / self.density
+                propagataion_z = np.abs(trimmed_sensor[trimmed_sensor["channel"] == "Z"]["reading"].values[i] + 1) / self.density
+                
+                
+                # get indicies of points within the propagataion radius
+                x_indicies = np.where(np.abs(self.x - sensor_x) < propagataion_x)[0]
+                y_indicies = np.where(np.abs(self.y - sensor_y) < propagataion_y)[0]
+                z_indicies = np.where(np.abs(self.z - sensor_z) < propagataion_z)[0]
+                indicies = np.intersect1d(x_indicies, y_indicies)
+                indicies = np.intersect1d(indicies, z_indicies)
+
+                # x_inrange = np.argwhere(np.logical_or(self.x < 4, self.x > 4))
+                x_inrange = np.argwhere(np.abs(self.x - sensor_x) < propagataion_x)
+                y_inrange = np.argwhere(np.logical_or(self.y < sensor_y + propagataion_y, self.y < sensor_y - propagataion_y))
+                z_inrange = np.argwhere(np.logical_or(self.z < sensor_z + propagataion_z, self.z < sensor_z - propagataion_z))
+                print()
+                plt.plot(self.x[x_indicies])
+                plt.show()
+                exit(0)
+                print(len(self.x[x_inrange]), len(self.y[y_inrange]), len(self.z[z_inrange]))
+                sensor_plots.append(go.Scatter3d(x=self.x[x_indices], y=self.y[y_inrange], z=self.z[z_inrange], mode="markers",marker=dict( color="red", opacity=0.9)))
+                # get frame
+
+            frames.append(go.Frame(data=sensor_plots))
+            # append frame
+        return frames
 
     def plot(self) -> None:
         fig = go.Figure(
@@ -64,6 +112,8 @@ class StructureWithSensors:
         )
         fig.show()
 
+    def show(self):
+        self.fig.show()
 
 # inches
 X_LEN = 7.25
@@ -76,4 +126,7 @@ sensors = {
     "D": (X_LEN, Y_LEN, Z_LEN),
 }
 my_structure = StructureWithSensors(X_LEN, Y_LEN, Z_LEN, sensors)
+my_structure.load_data("data/test1.csv")
+# my_structure.build_frames()
 my_structure.plot()
+# my_structure.show()
