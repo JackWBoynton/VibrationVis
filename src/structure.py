@@ -15,8 +15,8 @@ class StructureWithSensors:
         width_inches: float,
         height_inches: float,
         sensors: dict[str, tuple[float, float, float]],
-        density: float = 0.75,
-        points_per_inch: int = 20
+        density: float = 0.15,
+        points_per_inch: int = 30
     ) -> None:
         self.length_inches = length_inches
         self.width_inches = width_inches
@@ -55,33 +55,37 @@ class StructureWithSensors:
 
         frames = []
         # make me faster
-        for i in tqdm(range(min_len)[5000:50+5000]):
-            # go.Scatter3d(x=self.x, y=self.y, z=self.z, mode="markers", marker=dict(color="lightgrey",opacity=0.5), name="Structure")
-            sensor_plots = []
+        for i in tqdm(range(0, 9203, 100)):
+            sensor_plots = [go.Scatter3d(x=self.x, y=self.y, z=self.z, mode="markers", marker=dict(color="lightgrey",opacity=0.5), name="Structure")]
             for sensor, trimmed_sensor in zip(self.sensors.keys(), trimmed):
                 sensor_x, sensor_y, sensor_z = self.sensors[sensor]
                 propagataion_x = np.abs(trimmed_sensor[trimmed_sensor["channel"] == "X"]["reading"].values[i]) / self.density
                 propagataion_y = np.abs(trimmed_sensor[trimmed_sensor["channel"] == "Y"]["reading"].values[i]) / self.density
                 propagataion_z = np.abs(trimmed_sensor[trimmed_sensor["channel"] == "Z"]["reading"].values[i] + 1) / self.density
-                
-                
-                # get indicies of points within the propagataion radius
-                x_indicies = np.where(np.abs(self.x - sensor_x) < propagataion_x)[0]
-                y_indicies = np.where(np.abs(self.y - sensor_y) < propagataion_y)[0]
-                z_indicies = np.where(np.abs(self.z - sensor_z) < propagataion_z)[0]
-                indicies = np.intersect1d(x_indicies, y_indicies)
-                indicies = np.intersect1d(indicies, z_indicies)
 
-                # x_inrange = np.argwhere(np.logical_or(self.x < 4, self.x > 4))
-                x_inrange = np.argwhere(np.abs(self.x - sensor_x) < propagataion_x)
-                y_inrange = np.argwhere(np.logical_or(self.y < sensor_y + propagataion_y, self.y < sensor_y - propagataion_y))
-                z_inrange = np.argwhere(np.logical_or(self.z < sensor_z + propagataion_z, self.z < sensor_z - propagataion_z))
-                print()
-                plt.plot(self.x[x_indicies])
-                plt.show()
-                exit(0)
-                print(len(self.x[x_inrange]), len(self.y[y_inrange]), len(self.z[z_inrange]))
-                sensor_plots.append(go.Scatter3d(x=self.x[x_indices], y=self.y[y_inrange], z=self.z[z_inrange], mode="markers",marker=dict( color="red", opacity=0.9)))
+                # color points based on the magnitude of the propagation and the distance from the sensor
+                color = np.sqrt(np.square(self.x - sensor_x) + np.square(self.y - sensor_y) + np.square(self.z - sensor_z))
+                color = color / np.max(color)
+                color = color * 255
+                color = np.minimum(color, 255 / propagataion_z)
+                color = np.minimum(color, 255 / propagataion_y)
+                color = np.minimum(color, 255 / propagataion_x)
+                color = np.maximum(color, 0)
+                color = np.round(color)
+
+                # build the 3d scatter plot
+                sensor_plots.append(go.Scatter3d(
+                    x=self.x[np.logical_and(np.logical_and(np.logical_and(np.logical_and(self.x >= sensor_x - propagataion_x, self.x <= sensor_x + propagataion_x), self.y >= sensor_y - propagataion_y), self.y <= sensor_y + propagataion_y), self.z >= sensor_z - propagataion_z, self.z <= sensor_z + propagataion_z)],
+                    y=self.y[np.logical_and(np.logical_and(np.logical_and(np.logical_and(self.x >= sensor_x - propagataion_x, self.x <= sensor_x + propagataion_x), self.y >= sensor_y - propagataion_y), self.y <= sensor_y + propagataion_y), self.z >= sensor_z - propagataion_z, self.z <= sensor_z + propagataion_z)],
+                    z=self.z[np.logical_and(np.logical_and(np.logical_and(np.logical_and(self.x >= sensor_x - propagataion_x, self.x <= sensor_x + propagataion_x), self.y >= sensor_y - propagataion_y), self.y <= sensor_y + propagataion_y), self.z >= sensor_z - propagataion_z, self.z <= sensor_z + propagataion_z)],
+                    mode="markers",
+                    marker=dict(
+                        color=color[np.logical_and(np.logical_and(np.logical_and(np.logical_and(self.x >= sensor_x - propagataion_x, self.x <= sensor_x + propagataion_x), self.y >= sensor_y - propagataion_y), self.y <= sensor_y + propagataion_y), self.z >= sensor_z - propagataion_z, self.z <= sensor_z + propagataion_z)],
+                        opacity=1,
+                        colorscale="Viridis"
+                    ),
+                    name=f"Sensor {sensor}"
+                ))
                 # get frame
 
             frames.append(go.Frame(data=sensor_plots))
