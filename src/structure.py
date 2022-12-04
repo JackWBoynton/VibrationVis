@@ -4,6 +4,8 @@ import numpy as np
 import pywt
 import scipy.signal
 import scipy
+from scipy import signal
+from scipy.fft import fftshift
 import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
@@ -109,6 +111,30 @@ class StructureWithSensors:
         fig.update_yaxes(title_text="PSD [V**2/Hz] <br></br>   B", row=2, col=1)
         return fig
 
+    def spectogram_xyz_plot(self):
+        fig = make_subplots(rows=len(self.sensors), cols=len(self.data.channel.unique()), shared_xaxes=True)
+        for m, sensor in enumerate(self.sensors):
+            for n, channel in enumerate(("X", "Y", "Z")):
+                sel = self.data[(self.data["field"] == sensor) & (self.data["channel"] == channel)]
+
+                # compute the vibration spectrogram of the signal
+                freq_axis, time_axis, S = scipy.signal.spectrogram(sel.reading.values, SAMPLE_RATE, nperseg=256, noverlap=255)
+
+                fig.add_trace(
+                    go.Heatmap(z=S, x=time_axis, y=freq_axis, name="{} {}".format(sensor, channel), colorscale="Jet", showscale=True if m == len(self.sensors)-1 and n == len(self.data.channel.unique()) else False),
+                    row=m+1, col=n+1
+                )
+                # yaxis is log scale
+                # fig.update_yaxes(type="log", row=m+1, col=n+1)
+
+                fig.update_yaxes(title_text=sensor, row=m+1, col=n+1)
+                fig.update_xaxes(title_text=channel, row=m+1, col=n+1)
+
+
+        fig.update_xaxes(title_text="  Y    <br></br>Time", row=len(self.sensors), col=2)
+        fig.update_yaxes(title_text="Frequency [Hz] <br></br>    B", row=2, col=1)
+        return fig
+
     def build_frames(self) -> None:
         import matplotlib.pyplot as plt
         by_sensors = [self.data[self.data["field"] == sensor] for sensor in self.sensors]
@@ -176,6 +202,15 @@ class StructureWithSensors:
             ),
             frames=self.build_frames()
         )
+        # set bounds on zyz
+        # fig.update_layout(
+        #     scene = dict(
+        #         xaxis = dict(nticks=4, range=[0, 10],),
+        #         yaxis = dict(nticks=4, range=[0, 10],),
+        #         zaxis = dict(nticks=4, range=[0, 10],),
+        #         ),
+        #     width=700,
+        # )
         # fig.show()
         return fig
 

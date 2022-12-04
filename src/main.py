@@ -96,6 +96,23 @@ app.layout = html.Div([
             style={"width": "100%", "height": "auto", "margin": "auto"},
           ),
         ]
+      ),
+      dbc.Row(
+        [
+          dbc.Card(
+            children=[
+              dbc.CardHeader(html.H2("XYZ Spectogram")),
+              dbc.CardBody(children=[
+                  dcc.Loading(children=[
+                      dcc.Graph(id="xyz-graph", figure=sws.spectogram_xyz_plot()),
+                    ]
+                  )
+                ],
+              )
+            ],
+            style={"width": "100%", "height": "auto", "margin": "auto"},
+          ),
+        ]
       )
     ],
     style={"width": "auto", "height": "auto", "margin": "auto"}),
