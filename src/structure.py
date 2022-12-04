@@ -45,7 +45,20 @@ class StructureWithSensors:
     def load_data(self, data_path: str) -> None:
         self.data = pd.read_csv(data_path).sort_values(by="timestamp_sent")
 
-
+    def xyz_plot(self):
+        fig = make_subplots(rows=len(self.sensors), cols=len(self.data.channel.unique()), shared_xaxes=True)
+        for m, sensor in enumerate(self.sensors):
+            for n, channel in enumerate(("X", "Y", "Z")):
+                sel = self.data[(self.data["field"] == sensor) & (self.data["channel"] == channel)]
+                fig.add_trace(
+                    go.Scatter(x=pd.to_datetime(sel.timestamp_sent, unit="s"), y=sel.reading.values, name="{} {}".format(sensor, channel)),
+                    row=m+1, col=n+1
+                )
+                fig.update_yaxes(title_text=sensor, row=m+1, col=n+1)
+                fig.update_xaxes(title_text=channel, row=m+1, col=n+1)
+        fig.update_xaxes(title_text=" Y <br></br>  Time", row=len(self.sensors), col=2)
+        fig.update_yaxes(title_text="Acceleration (g)<br></br>   B", row=2, col=1)
+        return fig
 
     def build_frames(self) -> None:
         import matplotlib.pyplot as plt
@@ -130,7 +143,7 @@ if __name__ == "__main__":
     sensors = {
         "A": (0, 0, Z_LEN),
         "B": (0, Y_LEN ,Z_LEN),
-        "D": (X_LEN, Y_LEN, Z_LEN),
+        "C": (X_LEN, Y_LEN, Z_LEN),
     }
     my_structure = StructureWithSensors(X_LEN, Y_LEN, Z_LEN, sensors)
     my_structure.load_data("data/test1.csv")
