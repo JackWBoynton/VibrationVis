@@ -114,23 +114,26 @@ class StructureWithSensors:
             ),
             frames=self.build_frames()
         )
-        fig.show()
+        # fig.show()
+        return fig
 
     def show(self):
         self.fig.show()
 
-# inches
-X_LEN = 7.25
-Y_LEN = 7.0
-Z_LEN = 1.25
 
-sensors = {
-    "A": (0, 0, Z_LEN),
-    "B": (0, Y_LEN ,Z_LEN),
-    "D": (X_LEN, Y_LEN, Z_LEN),
-}
-my_structure = StructureWithSensors(X_LEN, Y_LEN, Z_LEN, sensors)
-my_structure.load_data("data/test1.csv")
-# my_structure.build_frames()
-my_structure.plot()
-# my_structure.show()
+if __name__ == "__main__":
+    # inches
+    X_LEN = 7.25
+    Y_LEN = 7.0
+    Z_LEN = 1.25
+
+    sensors = {
+        "A": (0, 0, Z_LEN),
+        "B": (0, Y_LEN ,Z_LEN),
+        "D": (X_LEN, Y_LEN, Z_LEN),
+    }
+    my_structure = StructureWithSensors(X_LEN, Y_LEN, Z_LEN, sensors)
+    my_structure.load_data("data/test1.csv")
+    # my_structure.build_frames()
+    my_structure.plot()
+    # my_structure.show()
