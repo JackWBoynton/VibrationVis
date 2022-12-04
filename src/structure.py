@@ -1,10 +1,15 @@
 """Structure Class and Utils."""
 
 import numpy as np
+import pywt
+import scipy.signal
+import scipy
 import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from tqdm import tqdm
+
+SAMPLE_RATE = 2000
 
 class StructureWithSensors:
     """Class to Handle an Instance of a Structure to Simulate."""
@@ -58,6 +63,50 @@ class StructureWithSensors:
                 fig.update_xaxes(title_text=channel, row=m+1, col=n+1)
         fig.update_xaxes(title_text=" Y <br></br>  Time", row=len(self.sensors), col=2)
         fig.update_yaxes(title_text="Acceleration (g)<br></br>   B", row=2, col=1)
+        return fig
+
+    def fft_xyz_plot(self):
+        fig = make_subplots(rows=len(self.sensors), cols=len(self.data.channel.unique()), shared_xaxes=True)
+        for m, sensor in enumerate(self.sensors):
+            for n, channel in enumerate(("X", "Y", "Z")):
+                sel = self.data[(self.data["field"] == sensor) & (self.data["channel"] == channel)]
+                # compute the fft of the signal
+                fft = np.fft.fft(sel.reading.values)
+                # get the frequencies
+                freq = np.fft.fftfreq(sel.shape[0])
+                freq_axis = np.linspace(0, SAMPLE_RATE, len(np.abs(fft)))
+
+                fig.add_trace(
+                    go.Scatter(x=freq_axis, y=np.abs(fft), name="{} {}".format(sensor, channel)),
+                    row=m+1, col=n+1
+                )
+                fig.update_yaxes(title_text=sensor, row=m+1, col=n+1)
+                fig.update_xaxes(title_text=channel, row=m+1, col=n+1)
+
+        fig.update_xaxes(title_text="   Y    <br></br>FFT frequency", row=len(self.sensors), col=2)
+        fig.update_yaxes(title_text="Intensity <br></br>   B", row=2, col=1)
+        return fig
+
+    def psd_xyz_plot(self):
+        fig = make_subplots(rows=len(self.sensors), cols=len(self.data.channel.unique()), shared_xaxes=True)
+        for m, sensor in enumerate(self.sensors):
+            for n, channel in enumerate(("X", "Y", "Z")):
+                sel = self.data[(self.data["field"] == sensor) & (self.data["channel"] == channel)]
+
+                (f, S)= scipy.signal.welch(sel.reading.values, SAMPLE_RATE, nperseg=4*1024)
+
+                fig.add_trace(
+                    go.Scatter(x=f, y=S, name="{} {}".format(sensor, channel)),
+                    row=m+1, col=n+1
+                )
+                # yaxis is log scale
+                fig.update_yaxes(type="log", row=m+1, col=n+1)
+
+                fig.update_yaxes(title_text=sensor, row=m+1, col=n+1)
+                fig.update_xaxes(title_text=channel, row=m+1, col=n+1)
+
+        fig.update_xaxes(title_text="  Y    <br></br>frequency [Hz]", row=len(self.sensors), col=2)
+        fig.update_yaxes(title_text="PSD [V**2/Hz] <br></br>   B", row=2, col=1)
         return fig
 
     def build_frames(self) -> None:
@@ -143,7 +192,7 @@ if __name__ == "__main__":
     sensors = {
         "A": (0, 0, Z_LEN),
         "B": (0, Y_LEN ,Z_LEN),
-        "C": (X_LEN, Y_LEN, Z_LEN),
+        "D": (X_LEN, Y_LEN, Z_LEN),
     }
     my_structure = StructureWithSensors(X_LEN, Y_LEN, Z_LEN, sensors)
     my_structure.load_data("data/test1.csv")

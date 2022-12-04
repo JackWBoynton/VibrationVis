@@ -27,7 +27,7 @@ Z_LEN = 1.25
 sensors = {
     "A": (0, 0, Z_LEN),
     "B": (0, Y_LEN ,Z_LEN),
-    "C": (X_LEN, Y_LEN, Z_LEN),
+    "D": (X_LEN, Y_LEN, Z_LEN),
 }
 
 sws = StructureWithSensors(X_LEN, Y_LEN, Z_LEN, sensors)
@@ -54,6 +54,40 @@ app.layout = html.Div([
               dbc.CardBody(children=[
                   dcc.Loading(children=[
                       dcc.Graph(id="xyz-graph", figure=sws.xyz_plot()),
+                    ]
+                  )
+                ],
+              )
+            ],
+            style={"width": "100%", "height": "auto", "margin": "auto"},
+          ),
+        ]
+      ),
+      dbc.Row(
+        [
+          dbc.Card(
+            children=[
+              dbc.CardHeader(html.H2("XYZ Acceleration -- FFT")),
+              dbc.CardBody(children=[
+                  dcc.Loading(children=[
+                      dcc.Graph(id="xyz-graph", figure=sws.fft_xyz_plot()),
+                    ]
+                  )
+                ],
+              )
+            ],
+            style={"width": "100%", "height": "auto", "margin": "auto"},
+          ),
+        ]
+      ),
+      dbc.Row(
+        [
+          dbc.Card(
+            children=[
+              dbc.CardHeader(html.H2("XYZ Acceleration -- Power Spectral Density")),
+              dbc.CardBody(children=[
+                  dcc.Loading(children=[
+                      dcc.Graph(id="xyz-graph", figure=sws.psd_xyz_plot()),
                     ]
                   )
                 ],
