@@ -138,14 +138,13 @@ class StructureWithSensors:
         return fig
 
     def build_frames(self) -> None:
-        import matplotlib.pyplot as plt
         by_sensors = [self.data[self.data["field"] == sensor] for sensor in self.sensors]
         min_len = min([len(sensor) for sensor in by_sensors])
         trimmed = [sensor[:min_len] for sensor in by_sensors]
 
         frames = []
         # make me faster
-        for i in tqdm(range(0, 9203, 100)):
+        for i in tqdm(range(0, 4200, 100)):
             sensor_plots = [go.Scatter3d(x=self.x, y=self.y, z=self.z, mode="markers", marker=dict(color="lightgrey",opacity=0.5), name="Structure")]
             intensity = np.zeros(len(self.x))
             for sensor, trimmed_sensor in zip(self.sensors.keys(), trimmed):

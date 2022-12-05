@@ -19,6 +19,8 @@ styles = {
 external_stylesheets = [dbc.themes.BOOTSTRAP]
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
+server = app.server
+
 # inches
 X_LEN = 7.25
 Y_LEN = 7.0
@@ -120,18 +122,6 @@ app.layout = html.Div([
 ])
 
 
-@app.callback(
-  [
-    Output("xyz-graph", "figure"),
-  ],
-  [
-    Input("play-button", "n_clicks"),
-  ]
-)
-def graphs(n_clicks):
-  cbcontext = [p["prop_id"] for p in dash.callback_context.triggered][0]
-
-
 if __name__ == '__main__':
-    app.run_server(debug=True, port=8050)
+    app.run_server(debug=True)
 
