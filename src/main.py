@@ -30,7 +30,7 @@ sensors = {
     "D": (X_LEN, Y_LEN, Z_LEN),
 }
 
-sws = StructureWithSensors(X_LEN, Y_LEN, Z_LEN, sensors)
+sws = StructureWithSensors(X_LEN, Y_LEN, Z_LEN, sensors, {"A": "red", "B": "blue", "D": "green"})
 sws.load_data("data/test1.csv")
 
 app.layout = html.Div([

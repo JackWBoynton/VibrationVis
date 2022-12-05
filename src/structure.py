@@ -22,13 +22,15 @@ class StructureWithSensors:
         width_inches: float,
         height_inches: float,
         sensors: dict[str, tuple[float, float, float]],
-        density: float = 0.15,
-        points_per_inch: int = 30
+        sensor_colors: dict[str, str],
+        density: float = 0.75,
+        points_per_inch: int = 25
     ) -> None:
         self.length_inches = length_inches
         self.width_inches = width_inches
         self.height_inches = height_inches
         self.sensors = sensors
+        self.sensor_colors = sensor_colors
         self.density = density
         self.points_per_inch = points_per_inch
 
@@ -184,7 +186,7 @@ class StructureWithSensors:
         fig = go.Figure(
             data=[
                 go.Scatter3d(x=self.x, y=self.y, z=self.z, mode="markers", name="Structure"),
-                *[go.Scatter3d(x=[self.sensors[sensor][0]], y=[self.sensors[sensor][1]], z=[self.sensors[sensor][2]], mode="markers", name=f"Sensor {sensor}") for sensor in self.sensors]
+                *[go.Scatter3d(x=[self.sensors[sensor][0]], y=[self.sensors[sensor][1]], z=[self.sensors[sensor][2]], mode="markers", name=f"Sensor {sensor}", marker=dict(color=self.sensor_colors[sensor])) for sensor in self.sensors]
             ],
             layout=go.Layout(
                 updatemenus=[
@@ -229,7 +231,7 @@ if __name__ == "__main__":
         "B": (0, Y_LEN ,Z_LEN),
         "D": (X_LEN, Y_LEN, Z_LEN),
     }
-    my_structure = StructureWithSensors(X_LEN, Y_LEN, Z_LEN, sensors)
+    my_structure = StructureWithSensors(X_LEN, Y_LEN, Z_LEN, sensors, {"A": "red", "B": "blue", "D": "green"})
     my_structure.load_data("data/test1.csv")
     # my_structure.build_frames()
     my_structure.plot()
