@@ -122,18 +122,6 @@ app.layout = html.Div([
 ])
 
 
-@app.callback(
-  [
-    Output("xyz-graph", "figure"),
-  ],
-  [
-    Input("play-button", "n_clicks"),
-  ]
-)
-def graphs(n_clicks):
-  cbcontext = [p["prop_id"] for p in dash.callback_context.triggered][0]
-
-
 if __name__ == '__main__':
     app.run_server(debug=True)
 

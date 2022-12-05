@@ -138,7 +138,6 @@ class StructureWithSensors:
         return fig
 
     def build_frames(self) -> None:
-        import matplotlib.pyplot as plt
         by_sensors = [self.data[self.data["field"] == sensor] for sensor in self.sensors]
         min_len = min([len(sensor) for sensor in by_sensors])
         trimmed = [sensor[:min_len] for sensor in by_sensors]
