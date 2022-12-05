@@ -23,7 +23,7 @@ class StructureWithSensors:
         height_inches: float,
         sensors: dict[str, tuple[float, float, float]],
         sensor_colors: dict[str, str],
-        density: float = 0.75,
+        density: float = 0.65,
         points_per_inch: int = 25
     ) -> None:
         self.length_inches = length_inches
@@ -146,36 +146,17 @@ class StructureWithSensors:
         # make me faster
         for i in tqdm(range(0, 4200, 100)):
             sensor_plots = [go.Scatter3d(x=self.x, y=self.y, z=self.z, mode="markers", marker=dict(color="lightgrey",opacity=0.5), name="Structure")]
+            intensity = np.zeros(len(self.x))
             for sensor, trimmed_sensor in zip(self.sensors.keys(), trimmed):
                 sensor_x, sensor_y, sensor_z = self.sensors[sensor]
-                propagataion_x = np.abs(trimmed_sensor[trimmed_sensor["channel"] == "X"]["reading"].values[i]) / self.density
-                propagataion_y = np.abs(trimmed_sensor[trimmed_sensor["channel"] == "Y"]["reading"].values[i]) / self.density
-                propagataion_z = np.abs(trimmed_sensor[trimmed_sensor["channel"] == "Z"]["reading"].values[i] + 1) / self.density
+                trimmed_sensor_data_x, trimmed_sensor_data_y, trimmed_sensor_data_z = trimmed_sensor[trimmed_sensor.channel == "X"].reading.values[i], trimmed_sensor[trimmed_sensor.channel == "Y"].reading.values[i], trimmed_sensor[trimmed_sensor.channel == "Z"].reading.values[i]
 
-                # color points based on the magnitude of the propagation and the distance from the sensor
-                color = np.sqrt(np.square(self.x - sensor_x) + np.square(self.y - sensor_y) + np.square(self.z - sensor_z))
-                color = color / np.max(color)
-                color = color * 255
-                color = np.minimum(color, 255 / propagataion_z)
-                color = np.minimum(color, 255 / propagataion_y)
-                color = np.minimum(color, 255 / propagataion_x)
-                color = np.maximum(color, 0)
-                color = np.round(color)
+                distance = np.sqrt((self.x-sensor_x)**2 + (self.y-sensor_y)**2 + (self.z-sensor_z)**2)
+                intensity += (trimmed_sensor_data_x**2 + trimmed_sensor_data_y**2 + trimmed_sensor_data_z**2)**0.5 / distance
+            # log scale intensity
+            intensity = np.log(intensity)
 
-                # build the 3d scatter plot
-                sensor_plots.append(go.Scatter3d(
-                    x=self.x[np.logical_and(np.logical_and(np.logical_and(np.logical_and(self.x >= sensor_x - propagataion_x, self.x <= sensor_x + propagataion_x), self.y >= sensor_y - propagataion_y), self.y <= sensor_y + propagataion_y), self.z >= sensor_z - propagataion_z, self.z <= sensor_z + propagataion_z)],
-                    y=self.y[np.logical_and(np.logical_and(np.logical_and(np.logical_and(self.x >= sensor_x - propagataion_x, self.x <= sensor_x + propagataion_x), self.y >= sensor_y - propagataion_y), self.y <= sensor_y + propagataion_y), self.z >= sensor_z - propagataion_z, self.z <= sensor_z + propagataion_z)],
-                    z=self.z[np.logical_and(np.logical_and(np.logical_and(np.logical_and(self.x >= sensor_x - propagataion_x, self.x <= sensor_x + propagataion_x), self.y >= sensor_y - propagataion_y), self.y <= sensor_y + propagataion_y), self.z >= sensor_z - propagataion_z, self.z <= sensor_z + propagataion_z)],
-                    mode="markers",
-                    marker=dict(
-                        color=color[np.logical_and(np.logical_and(np.logical_and(np.logical_and(self.x >= sensor_x - propagataion_x, self.x <= sensor_x + propagataion_x), self.y >= sensor_y - propagataion_y), self.y <= sensor_y + propagataion_y), self.z >= sensor_z - propagataion_z, self.z <= sensor_z + propagataion_z)],
-                        opacity=1,
-                        colorscale="Viridis"
-                    ),
-                    name=f"Sensor {sensor}"
-                ))
-                # get frame
+            sensor_plots.append(go.Scatter3d(x=self.x[intensity > 0.01], y=self.y[intensity > 0.01], z=self.z[intensity > 0.01], mode="markers", marker=dict(color=intensity[intensity > 0], colorscale="Jet", opacity=1), name="{} T={:.2f} s".format(sensor, i/SAMPLE_RATE)))
 
             frames.append(go.Frame(data=sensor_plots))
             # append frame
