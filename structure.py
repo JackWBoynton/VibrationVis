@@ -156,7 +156,7 @@ class StructureWithSensors:
                 distance = np.sqrt((self.x-sensor_x)**2 + (self.y-sensor_y)**2 + (self.z-sensor_z)**2)
                 intensity += np.array((trimmed_sensor_data_x**2 + trimmed_sensor_data_y**2 + trimmed_sensor_data_z**2)**0.5 / distance)
 
-            intensity = np.log(intensity) * 10
+            intensity = np.log(intensity)
             sensor_plots.append(go.Scatter3d(x=self.x[intensity > np.median(intensity)], y=self.y[intensity > np.median(intensity)], z=self.z[intensity > np.median(intensity)], mode="markers", marker=dict(color=intensity[intensity > np.median(intensity)], colorscale="Viridis", opacity=0.7), name="{} T={:.2f} s".format(sensor, i/SAMPLE_RATE)))
 
             frames.append(go.Frame(data=sensor_plots))
