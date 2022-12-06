@@ -144,7 +144,7 @@ class StructureWithSensors:
 
         frames = []
         # make me faster
-        for i in tqdm(range(0, 4200, 100)):
+        for i in tqdm(range(0, 3800, 100)):
             sensor_plots = [go.Scatter3d(x=self.x, y=self.y, z=self.z, mode="markers", marker=dict(color="lightgrey",opacity=0.5), name="Structure")]
             intensity = np.zeros(len(self.x))
             for sensor, trimmed_sensor in zip(self.sensors.keys(), trimmed):
