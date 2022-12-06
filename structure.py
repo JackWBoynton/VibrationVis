@@ -24,7 +24,8 @@ class StructureWithSensors:
         sensors: dict[str, tuple[float, float, float]],
         sensor_colors: dict[str, str],
         density: float = 0.65,
-        points_per_inch: int = 25
+        points_per_inch: list[int] = [3, 3, 15],
+        color_thresholds = [1., 1., 0.5],
     ) -> None:
         self.length_inches = length_inches
         self.width_inches = width_inches
@@ -33,11 +34,12 @@ class StructureWithSensors:
         self.sensor_colors = sensor_colors
         self.density = density
         self.points_per_inch = points_per_inch
+        self.color_thresholds = color_thresholds
 
         x, y, z = np.meshgrid(
-            np.linspace(0, self.length_inches, self.points_per_inch),
-            np.linspace(0, self.width_inches, self.points_per_inch),
-            np.linspace(0, self.height_inches, self.points_per_inch),
+            np.linspace(0, self.length_inches, int(self.points_per_inch[0] * self.length_inches)),
+            np.linspace(0, self.width_inches, int(self.points_per_inch[1] * self.width_inches)),
+            np.linspace(0, self.height_inches, int(self.points_per_inch[2] * self.height_inches)),
             indexing="ij",
             sparse=False,
         )
@@ -152,11 +154,10 @@ class StructureWithSensors:
                 trimmed_sensor_data_x, trimmed_sensor_data_y, trimmed_sensor_data_z = trimmed_sensor[trimmed_sensor.channel == "X"].reading.values[i], trimmed_sensor[trimmed_sensor.channel == "Y"].reading.values[i], trimmed_sensor[trimmed_sensor.channel == "Z"].reading.values[i]
 
                 distance = np.sqrt((self.x-sensor_x)**2 + (self.y-sensor_y)**2 + (self.z-sensor_z)**2)
-                intensity += (trimmed_sensor_data_x**2 + trimmed_sensor_data_y**2 + trimmed_sensor_data_z**2)**0.5 / distance
-            # log scale intensity
-            intensity = np.log(intensity)
+                intensity += np.array((trimmed_sensor_data_x**2 + trimmed_sensor_data_y**2 + trimmed_sensor_data_z**2)**0.5 / distance)
 
-            sensor_plots.append(go.Scatter3d(x=self.x[intensity > 0.01], y=self.y[intensity > 0.01], z=self.z[intensity > 0.01], mode="markers", marker=dict(color=intensity[intensity > 0], colorscale="Jet", opacity=1), name="{} T={:.2f} s".format(sensor, i/SAMPLE_RATE)))
+            intensity = np.log(intensity) * 10
+            sensor_plots.append(go.Scatter3d(x=self.x[intensity > np.median(intensity)], y=self.y[intensity > np.median(intensity)], z=self.z[intensity > np.median(intensity)], mode="markers", marker=dict(color=intensity[intensity > np.median(intensity)], colorscale="Viridis", opacity=0.7), name="{} T={:.2f} s".format(sensor, i/SAMPLE_RATE)))
 
             frames.append(go.Frame(data=sensor_plots))
             # append frame
@@ -173,6 +174,11 @@ class StructureWithSensors:
                     dict(
                         type="buttons",
                         buttons=[
+                            dict(
+                                label="Play",
+                                method="animate",
+                                args=[None]
+                            ),
                             dict(
                                 label="Play",
                                 method="animate",
