@@ -1,5 +1,8 @@
 """Main Entrypoint and Structure."""
 
+import os
+import random
+
 from plotly.subplots import make_subplots
 
 import dash
@@ -32,17 +35,15 @@ sensors = {
     "D": (X_LEN, Y_LEN, Z_LEN),
 }
 
-sws = StructureWithSensors(X_LEN, Y_LEN, Z_LEN, sensors, {"A": "red", "B": "blue", "D": "green"})
-sws.load_data("data/test1.csv")
-
 app.layout = html.Div([
+  dcc.Dropdown(os.listdir('data'), random.choice(os.listdir('data')), id='data-dropdown'),
   dbc.Row([
     dbc.Col([
       dbc.Card(
         children=[
           dbc.CardHeader(html.H2("3D Animated Structure")),
           dbc.CardBody(children=[
-              dcc.Loading(children=[dcc.Graph(id="main-3d-graph", figure=sws.plot()),])
+              dcc.Loading(children=[dcc.Graph(id="main-3d-graph"),])
             ],
           )
         ],
@@ -55,7 +56,7 @@ app.layout = html.Div([
               dbc.CardHeader(html.H2("XYZ Acceleration")),
               dbc.CardBody(children=[
                   dcc.Loading(children=[
-                      dcc.Graph(id="xyz-graph", figure=sws.xyz_plot()),
+                      dcc.Graph(id="xyz-graph-accel"),
                     ]
                   )
                 ],
@@ -72,7 +73,7 @@ app.layout = html.Div([
               dbc.CardHeader(html.H2("XYZ Acceleration -- FFT")),
               dbc.CardBody(children=[
                   dcc.Loading(children=[
-                      dcc.Graph(id="xyz-graph", figure=sws.fft_xyz_plot()),
+                      dcc.Graph(id="xyz-graph-fft"),
                     ]
                   )
                 ],
@@ -89,7 +90,7 @@ app.layout = html.Div([
               dbc.CardHeader(html.H2("XYZ Acceleration -- Power Spectral Density")),
               dbc.CardBody(children=[
                   dcc.Loading(children=[
-                      dcc.Graph(id="xyz-graph", figure=sws.psd_xyz_plot()),
+                      dcc.Graph(id="xyz-graph-spectral"),
                     ]
                   )
                 ],
@@ -103,10 +104,10 @@ app.layout = html.Div([
         [
           dbc.Card(
             children=[
-              dbc.CardHeader(html.H2("XYZ Spectogram")),
+              dbc.CardHeader(html.H2("XYZ Spectrogram")),
               dbc.CardBody(children=[
                   dcc.Loading(children=[
-                      dcc.Graph(id="xyz-graph", figure=sws.spectogram_xyz_plot()),
+                      dcc.Graph(id="xyz-graph-spectrogram"),
                     ]
                   )
                 ],
@@ -120,6 +121,16 @@ app.layout = html.Div([
     style={"width": "auto", "height": "auto", "margin": "auto"}),
   ])
 ])
+
+
+@app.callback(
+    [Output('main-3d-graph', 'figure'), Output('xyz-graph-accel', 'figure'), Output('xyz-graph-fft', 'figure'), Output('xyz-graph-spectral', 'figure'), Output('xyz-graph-spectrogram', 'figure')],
+    Input('data-dropdown', 'value')
+)
+def update_output(value):
+    sws = StructureWithSensors(X_LEN, Y_LEN, Z_LEN, sensors, {"A": "red", "B": "blue", "D": "green"})
+    sws.load_data(f"data/{value}")
+    return [sws.plot(), sws.xyz_plot(), sws.fft_xyz_plot(), sws.psd_xyz_plot(), sws.spectogram_xyz_plot()]
 
 
 if __name__ == '__main__':
