@@ -1,5 +1,7 @@
 """Main Entrypoint and Structure."""
+
 import os
+import random
 
 from plotly.subplots import make_subplots
 
@@ -34,7 +36,7 @@ sensors = {
 }
 
 app.layout = html.Div([
-  dcc.Dropdown(os.listdir('data'), 'test1.csv', id='data-dropdown'),
+  dcc.Dropdown(os.listdir('data'), random.choice(os.listdir('data')), id='data-dropdown'),
   dbc.Row([
     dbc.Col([
       dbc.Card(
