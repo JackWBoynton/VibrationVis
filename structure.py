@@ -145,8 +145,27 @@ class StructureWithSensors:
         trimmed = [sensor[:min_len] for sensor in by_sensors]
 
         frames = []
+        sliders_dict = {
+            "active": 0,
+            "yanchor": "top",
+            "xanchor": "left",
+            "currentvalue": {
+                "font": {"size": 20},
+                "prefix": "Year:",
+                "visible": True,
+                "xanchor": "right"
+            },
+            "transition": {"duration": 300, "easing": "cubic-in-out"},
+            "pad": {"b": 10, "t": 50},
+            "len": 0.9,
+            "x": 0.1,
+            "y": 0,
+            "steps": []
+        }
+
         # make me faster
-        for i in tqdm(range(0, 3800, 100)):
+        for i in tqdm(range(0, 3800, 10)):
+            frame = {"data": [], "name": str(i)}
             sensor_plots = [go.Scatter3d(x=self.x, y=self.y, z=self.z, mode="markers", marker=dict(color="lightgrey",opacity=0.5), name="Structure")]
             intensity = np.zeros(len(self.x))
             for sensor, trimmed_sensor in zip(self.sensors.keys(), trimmed):
@@ -158,48 +177,62 @@ class StructureWithSensors:
 
             intensity = np.log(intensity)
             sensor_plots.append(go.Scatter3d(x=self.x[intensity > np.median(intensity)], y=self.y[intensity > np.median(intensity)], z=self.z[intensity > np.median(intensity)], mode="markers", marker=dict(color=intensity[intensity > np.median(intensity)], colorscale="Viridis", opacity=0.7), name="{} T={:.2f} s".format(sensor, i/SAMPLE_RATE)))
+            frame["data"] = sensor_plots
 
-            frames.append(go.Frame(data=sensor_plots))
+            frames.append(frame)
+            slider_step = {"args": [
+                [i],
+                {"frame": {"duration": 1, "redraw": True},
+                "mode": "immediate",
+                "transition": {"duration": 1}}
+                    ],
+                "label": i,
+                "method": "animate"}
+            sliders_dict["steps"].append(slider_step)
             # append frame
-        return frames
+        return frames, sliders_dict
 
     def plot(self) -> None:
+        frames, sliders = self.build_frames()
         fig = go.Figure(
             data=[
                 go.Scatter3d(x=self.x, y=self.y, z=self.z, mode="markers", name="Structure"),
                 *[go.Scatter3d(x=[self.sensors[sensor][0]], y=[self.sensors[sensor][1]], z=[self.sensors[sensor][2]], mode="markers", name=f"Sensor {sensor}", marker=dict(color=self.sensor_colors[sensor])) for sensor in self.sensors]
             ],
             layout=go.Layout(
+                sliders=[sliders],
                 updatemenus=[
-                    dict(
-                        type="buttons",
-                        buttons=[
-                            dict(
-                                label="Play",
-                                method="animate",
-                                args=[None]
-                            ),
-                            dict(
-                                label="Play",
-                                method="animate",
-                                args=[None]
-                            )
-                        ]
-                    )
-                ]
+                        {
+                            "buttons": [
+                                {
+                                    "args": [None, {"frame": {"duration": 500, "redraw": True},
+                                                    "fromcurrent": True, "transition": {"duration": 300,
+                                                                                        "easing": "quadratic-in-out"}}],
+                                    "label": "Play",
+                                    "method": "animate"
+                                },
+                                {
+                                    "args": [[None], {"frame": {"duration": 0, "redraw": True},
+                                                    "mode": "immediate",
+                                                    "transition": {"duration": 0}}],
+                                    "label": "Pause",
+                                    "method": "animate"
+                                }
+                            ],
+                            "direction": "left",
+                            "pad": {"r": 10, "t": 87},
+                            "showactive": False,
+                            "type": "buttons",
+                            "x": 0.1,
+                            "xanchor": "right",
+                            "y": 0,
+                            "yanchor": "top"
+                        }
+                    ]
             ),
-            frames=self.build_frames()
+            frames=frames
         )
-        # set bounds on zyz
-        # fig.update_layout(
-        #     scene = dict(
-        #         xaxis = dict(nticks=4, range=[0, 10],),
-        #         yaxis = dict(nticks=4, range=[0, 10],),
-        #         zaxis = dict(nticks=4, range=[0, 10],),
-        #         ),
-        #     width=700,
-        # )
-        # fig.show()
+
         return fig
 
     def show(self):
