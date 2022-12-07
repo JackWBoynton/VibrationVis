@@ -36,90 +36,73 @@ sensors = {
 }
 
 app.layout = html.Div([
-  dcc.Dropdown(os.listdir('data'), random.choice(os.listdir('data')), id='data-dropdown'),
   dbc.Row([
-    dbc.Col([
-      dbc.Card(
-        children=[
-          dbc.CardHeader(html.H2("3D Animated Structure")),
-          dbc.CardBody(children=[
-              dcc.Loading(children=[dcc.Graph(id="main-3d-graph"),])
-            ],
+          dbc.Card(children=[
+                      dbc.CardHeader(html.H2("Load Data")),
+                      dcc.Dropdown(os.listdir('data'), random.choice(os.listdir('data')), id='data-dropdown')
+                     ],
+                   )
+           ], className = 'align-self-center'
+          ),
+
+  dbc.Card(
+    children=[
+      dbc.CardHeader(html.H2("3D Animated Structure")),
+      dbc.CardBody(children=[
+          dcc.Loading(children=[dcc.Graph(id="main-3d-graph"),])
+        ], style={"center": "auto"}
+      )
+    ], style={"width": "auto", "height": "80rem", "justify-content": "center", "align-items": "center"},
+  ),
+  dbc.Card(
+    children=[
+      dbc.CardHeader(html.H2("XYZ Acceleration")),
+      dbc.CardBody(children=[
+          dcc.Loading(children=[
+              dcc.Graph(id="xyz-graph-accel"),
+            ]
           )
         ],
-        style={"width": "100%", "height": "auto", "margin": "auto"},
-      ),
-      dbc.Row(
-        [
-          dbc.Card(
-            children=[
-              dbc.CardHeader(html.H2("XYZ Acceleration")),
-              dbc.CardBody(children=[
-                  dcc.Loading(children=[
-                      dcc.Graph(id="xyz-graph-accel"),
-                    ]
-                  )
-                ],
-              )
-            ],
-            style={"width": "100%", "height": "auto", "margin": "auto"},
-          ),
-        ]
-      ),
-      dbc.Row(
-        [
-          dbc.Card(
-            children=[
-              dbc.CardHeader(html.H2("XYZ Acceleration -- FFT")),
-              dbc.CardBody(children=[
-                  dcc.Loading(children=[
-                      dcc.Graph(id="xyz-graph-fft"),
-                    ]
-                  )
-                ],
-              )
-            ],
-            style={"width": "100%", "height": "auto", "margin": "auto"},
-          ),
-        ]
-      ),
-      dbc.Row(
-        [
-          dbc.Card(
-            children=[
-              dbc.CardHeader(html.H2("XYZ Acceleration -- Power Spectral Density")),
-              dbc.CardBody(children=[
-                  dcc.Loading(children=[
-                      dcc.Graph(id="xyz-graph-spectral"),
-                    ]
-                  )
-                ],
-              )
-            ],
-            style={"width": "100%", "height": "auto", "margin": "auto"},
-          ),
-        ]
-      ),
-      dbc.Row(
-        [
-          dbc.Card(
-            children=[
-              dbc.CardHeader(html.H2("XYZ Spectrogram")),
-              dbc.CardBody(children=[
-                  dcc.Loading(children=[
-                      dcc.Graph(id="xyz-graph-spectrogram"),
-                    ]
-                  )
-                ],
-              )
-            ],
-            style={"width": "100%", "height": "auto", "margin": "auto"},
-          ),
-        ]
       )
     ],
-    style={"width": "auto", "height": "auto", "margin": "auto"}),
-  ])
+  ),
+  dbc.Card(
+    children=[
+      dbc.CardHeader(html.H2("XYZ Acceleration -- FFT")),
+      dbc.CardBody(children=[
+          dcc.Loading(children=[
+              dcc.Graph(id="xyz-graph-fft"),
+            ]
+          )
+        ],
+      )
+    ],
+  ),
+  dbc.Card(
+    children=[
+      dbc.CardHeader(html.H2("XYZ Acceleration -- Power Spectral Density")),
+      dbc.CardBody(children=[
+          dcc.Loading(children=[
+              dcc.Graph(id="xyz-graph-spectral"),
+            ]
+          )
+        ],
+      )
+    ],
+  ),
+
+  dbc.Card(
+    children=[
+      dbc.CardHeader(html.H2("XYZ Spectrogram")),
+      dbc.CardBody(children=[
+          dcc.Loading(children=[
+              dcc.Graph(id="xyz-graph-spectrogram"),
+            ]
+          )
+        ],
+      )
+    ],
+  )
 ])
 
 

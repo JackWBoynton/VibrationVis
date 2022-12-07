@@ -11,7 +11,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from tqdm import tqdm
 
-SAMPLE_RATE = 2000
+SAMPLE_RATE = 1200
 
 class StructureWithSensors:
     """Class to Handle an Instance of a Structure to Simulate."""
@@ -122,14 +122,14 @@ class StructureWithSensors:
                 sel = self.data[(self.data["field"] == sensor) & (self.data["channel"] == channel)]
 
                 # compute the vibration spectrogram of the signal
-                freq_axis, time_axis, S = scipy.signal.spectrogram(sel.reading.values, SAMPLE_RATE, nperseg=256, noverlap=255)
+                time_axis, freq_axis, S = scipy.signal.spectrogram(sel.reading.values, SAMPLE_RATE, nperseg=128, nfft=2048)
 
                 fig.add_trace(
                     go.Heatmap(z=S, x=time_axis, y=freq_axis, name="{} {}".format(sensor, channel), colorscale="Jet", showscale=True if m == len(self.sensors)-1 and n == len(self.data.channel.unique()) else False),
                     row=m+1, col=n+1
                 )
                 # yaxis is log scale
-                # fig.update_yaxes(type="log", row=m+1, col=n+1)
+                fig.update_yaxes(type="log", row=m+1, col=n+1)
 
                 fig.update_yaxes(title_text=sensor, row=m+1, col=n+1)
                 fig.update_xaxes(title_text=channel, row=m+1, col=n+1)
@@ -159,7 +159,8 @@ class StructureWithSensors:
             intensity = np.log(intensity)
             sensor_plots.append(go.Scatter3d(x=self.x[intensity > np.median(intensity)], y=self.y[intensity > np.median(intensity)], z=self.z[intensity > np.median(intensity)], mode="markers", marker=dict(color=intensity[intensity > np.median(intensity)], colorscale="Viridis", opacity=0.7), name="{} T={:.2f} s".format(sensor, i/SAMPLE_RATE)))
 
-            frames.append(go.Frame(data=sensor_plots))
+            # update the graph title with the time of the frame  "{} T={:.2f} s".format(sensor, i/SAMPLE_RATE)
+            frames.append(go.Frame(data=sensor_plots, layout=go.Layout(title_text="{} T={:.2f} s".format(sensor, i/SAMPLE_RATE))))
             # append frame
         return frames
 
@@ -179,17 +180,13 @@ class StructureWithSensors:
                                 method="animate",
                                 args=[None]
                             ),
-                            dict(
-                                label="Play",
-                                method="animate",
-                                args=[None]
-                            )
                         ]
                     )
                 ]
             ),
             frames=self.build_frames()
         )
+        fig.update_layout(height=1000, width=1000)
         # set bounds on zyz
         # fig.update_layout(
         #     scene = dict(
