@@ -24,7 +24,7 @@ class StructureWithSensors:
         sensors: dict[str, tuple[float, float, float]],
         sensor_colors: dict[str, str],
         density: float = 0.65,
-        points_per_inch: list[int] = [3, 3, 15],
+        points_per_inch: list[int] = [3, 3, 8],
         color_thresholds = [1., 1., 0.5],
     ) -> None:
         self.length_inches = length_inches
@@ -140,13 +140,14 @@ class StructureWithSensors:
         return fig
 
     def build_frames(self) -> None:
+        print(self.sensors)
         by_sensors = [self.data[self.data["field"] == sensor] for sensor in self.sensors]
         min_len = min([len(sensor) for sensor in by_sensors])
         trimmed = [sensor[:min_len] for sensor in by_sensors]
 
         frames = []
         # make me faster
-        for i in tqdm(range(0, 3800, 100)):
+        for i in tqdm(range(min_len)):
             sensor_plots = [go.Scatter3d(x=self.x, y=self.y, z=self.z, mode="markers", marker=dict(color="lightgrey",opacity=0.5), name="Structure")]
             intensity = np.zeros(len(self.x))
             for sensor, trimmed_sensor in zip(self.sensors.keys(), trimmed):
