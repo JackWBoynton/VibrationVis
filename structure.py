@@ -166,7 +166,7 @@ class StructureWithSensors:
         return frames
 
     def load_frames(self):
-        with open("frames.pkl", "rb") as f:
+        with open(data_path.replace(".csv", ".pkl"), "rb") as f:
             return pickle.load(frames, f)
 
     def plot(self) -> None:

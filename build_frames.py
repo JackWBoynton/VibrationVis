@@ -3,12 +3,13 @@
 import mpi4py.MPI as MPI
 import plotly.graph_objects as go
 import numpy as np
+import os
 import json
 import pickle
 import pandas as pd
 
 SAMPLE_RATE = 2000
-DATA_PATH = "data/shaky.csv"
+DATA_PATH = "data/faster_pulse.csv"
 SENSORS = {'A': (0, 0, 1.25), 'B': (0, 7.0, 1.25), 'D': (7.25, 7.0, 1.25)}
 
 def make_structure(length_inches, width_inches, height_inches, points_per_inch):
@@ -42,36 +43,40 @@ def load(data_path):
   data = pd.read_csv(data_path).sort_values(by="timestamp_sent")
   return data
 
-def build_frames() -> None:
-  data = load(DATA_PATH)
+def build_frames_mpi(f) -> None:
+  data = load(f)
   x, y, z = make_structure(7.25, 7.0, 1.25, (3, 3, 8))
 
   min_len = min([len(data[(data["field"] == sensor) & (data["channel"] == channel)].values) for sensor in SENSORS.keys() for channel in ["X", "Y", "Z"]])
 
-  local_data = np.zeros((len(SENSORS.keys()), 3, min_len))
-  for n, sensor in enumerate(SENSORS.keys()):
-    for m, axis in enumerate(["X", "Y", "Z"]):
-      local_data[n][m] = data[(data["field"] == sensor) & (data["channel"] == axis)].reading.values[:min_len]
+  if MPI.COMM_WORLD.Get_rank() == 0:
+    local_data = np.zeros((len(SENSORS.keys()), 3, min_len))
+    for n, sensor in enumerate(SENSORS.keys()):
+      for m, axis in enumerate(["X", "Y", "Z"]):
+        local_data[n][m] = data[(data["field"] == sensor) & (data["channel"] == axis)].reading.values[:min_len]
 
-  # split trimmed into chunks for each processor and scatter with mpi
-  # local_data = np.array_split(local_data, 10, axis=2)
-  local_data = MPI.COMM_WORLD.Scatterv(local_data, root=0, axis=2)
+    # split trimmed into chunks for each processor and scatter with mpi
+    local_data = np.array_split(local_data, 10, axis=2)
+  else:
+    local_data = None
+  other_data = MPI.COMM_WORLD.scatter(local_data, root=0)
 
   frames = []
-  for i in range(local_data.shape[2]):
-      local_data_sel = local_data[:, :, i]
+  for i in range(other_data.shape[2]):
+      local_data_sel = other_data[:, :, i]
       frames.append(one_timestep_all_sensors(x, y, z, local_data_sel))
   # gather frames from each processor
-
+  frames = MPI.COMM_WORLD.gather(frames, root=0)
   if MPI.COMM_WORLD.Get_rank() == 0:
       print("Gathering frames")
-      frames = MPI.COMM_WORLD.gather(frames, root=0)
+
       frames = [frame for frames in frames for frame in frames]
       print(len(frames))
+      # make it pickle
+      with open(f"{DATA_PATH}.pkl", "wb") as f:
+          pickle.dump(frames, f)
 
 if __name__ == "__main__":
-  frames = build_frames()
-
-  # make it pickle
-  with open("frames.pkl", "wb") as f:
-      pickle.dump(frames, f)
+  for f in os.listdir("data"):
+    if f.endswith(".csv"):
+      build_frames_mpi(os.path.join("data", f))
