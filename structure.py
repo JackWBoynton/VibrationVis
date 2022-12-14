@@ -36,6 +36,7 @@ class StructureWithSensors:
         self.density = density
         self.points_per_inch = points_per_inch
         self.color_thresholds = color_thresholds
+        self.frame_path = None
 
         x, y, z = np.meshgrid(
             np.linspace(0, self.length_inches, int(self.points_per_inch[0] * self.length_inches)),
@@ -56,9 +57,8 @@ class StructureWithSensors:
 
     def load_data(self, data_path: str, mpi: bool = True) -> None:
         if mpi:
-            self.data_path = data_path
-        else:
-            self.data = pd.read_csv(data_path).sort_values(by="timestamp_sent")
+            self.frame_path = data_path
+        self.data = pd.read_csv(data_path).sort_values(by="timestamp_sent")
 
 
 
@@ -195,7 +195,7 @@ class StructureWithSensors:
                     )
                 ]
             ),
-            frames=self.load_frames()
+            frames=self.load_frames() if self.frame_path else self.build_frames()
         )
         fig.update_layout(height=1000, width=1000)
         return fig
