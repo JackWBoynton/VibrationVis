@@ -165,6 +165,10 @@ class StructureWithSensors:
             # append frame
         return frames
 
+    def load_frames(self):
+        with open("frames.pkl", "rb") as f:
+            return pickle.load(frames, f)
+
     def plot(self) -> None:
         fig = go.Figure(
             data=[
@@ -185,7 +189,7 @@ class StructureWithSensors:
                     )
                 ]
             ),
-            frames=self.build_frames()
+            frames=self.load_frames()
         )
         fig.update_layout(height=1000, width=1000)
         # set bounds on zyz
