@@ -77,6 +77,5 @@ def build_frames_mpi(f) -> None:
           pickle.dump(frames, f)
 
 if __name__ == "__main__":
-  for f in os.listdir("data"):
-    if f.endswith(".csv"):
-      build_frames_mpi(os.path.join("data", f))
+    DATA_PATH = os.path.join("data", "shaky.csv")
+    build_frames_mpi(DATA_PATH)

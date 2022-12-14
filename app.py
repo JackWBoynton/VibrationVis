@@ -39,7 +39,7 @@ app.layout = html.Div([
   dbc.Row([
           dbc.Card(children=[
                       dbc.CardHeader(html.H2("Load Data")),
-                      dcc.Dropdown(os.listdir('data'), random.choice(os.listdir('data')), id='data-dropdown')
+                      dcc.Dropdown(os.listdir('data'), random.choice([file for file in os.listdir('data') if file.endswith(".csv")]), id='data-dropdown')
                      ],
                    )
            ], className = 'align-self-center'
