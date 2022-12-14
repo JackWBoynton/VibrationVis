@@ -53,8 +53,13 @@ class StructureWithSensors:
                 [{"type": "xy"}, {"type": "xy"}, {"type": "xy"}]],
         )
 
-    def load_data(self, data_path: str) -> None:
-        self.data = pd.read_csv(data_path).sort_values(by="timestamp_sent")
+    def load_data(self, data_path: str, mpi: bool = True) -> None:
+        if mpi:
+            self.data_path = data_path
+        else:
+            self.data = pd.read_csv(data_path).sort_values(by="timestamp_sent")
+
+
 
     def xyz_plot(self):
         fig = make_subplots(rows=len(self.sensors), cols=len(self.data.channel.unique()), shared_xaxes=True)
@@ -166,8 +171,8 @@ class StructureWithSensors:
         return frames
 
     def load_frames(self):
-        with open(data_path.replace(".csv", ".pkl"), "rb") as f:
-            return pickle.load(frames, f)
+        with open(self.data_path.replace(".csv", ".pkl"), "rb") as f:
+            return pickle.load(f)
 
     def plot(self) -> None:
         fig = go.Figure(
@@ -192,16 +197,6 @@ class StructureWithSensors:
             frames=self.load_frames()
         )
         fig.update_layout(height=1000, width=1000)
-        # set bounds on zyz
-        # fig.update_layout(
-        #     scene = dict(
-        #         xaxis = dict(nticks=4, range=[0, 10],),
-        #         yaxis = dict(nticks=4, range=[0, 10],),
-        #         zaxis = dict(nticks=4, range=[0, 10],),
-        #         ),
-        #     width=700,
-        # )
-        # fig.show()
         return fig
 
     def show(self):
